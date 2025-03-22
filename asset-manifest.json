@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.js": "/teshager-Mamo/ethiopian-education.git/static/js/main.5fa6ace4.js",
-    "index.html": "/teshager-Mamo/ethiopian-education.git/index.html",
-    "main.5fa6ace4.js.map": "/teshager-Mamo/ethiopian-education.git/static/js/main.5fa6ace4.js.map"
+    "main.js": "/ethiopian-education/static/js/main.5fa6ace4.js",
+    "index.html": "/ethiopian-education/index.html",
+    "main.5fa6ace4.js.map": "/ethiopian-education/static/js/main.5fa6ace4.js.map"
   },
   "entrypoints": [
     "static/js/main.5fa6ace4.js"
