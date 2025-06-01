@@ -1,6 +1,6 @@
 {
-  "short_name": "Ethio Education",
-  "name": "Ethiopian Education Dashboard",
+  "short_name": "Ethiopia Edu Dashboard",
+  "name": "Ethiopia Education Dashboard",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
+  "theme_color": "#008000",
   "background_color": "#ffffff"
 }

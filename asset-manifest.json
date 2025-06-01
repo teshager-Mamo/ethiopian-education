@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/ethiopian-education/static/js/main.5fa6ace4.js",
+    "main.js": "/ethiopian-education/static/js/main.21a9d3df.js",
     "index.html": "/ethiopian-education/index.html",
-    "main.5fa6ace4.js.map": "/ethiopian-education/static/js/main.5fa6ace4.js.map"
+    "main.21a9d3df.js.map": "/ethiopian-education/static/js/main.21a9d3df.js.map"
   },
   "entrypoints": [
-    "static/js/main.5fa6ace4.js"
+    "static/js/main.21a9d3df.js"
   ]
 }
