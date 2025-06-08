@@ -1,9 +1,10 @@
 import React, { useContext, useMemo } from 'react';
-import { Box, Grid, Typography, Paper, Fade } from '@mui/material';
+import { Box, Grid, Typography, Paper, Fade, Card, CardContent, CardActionArea } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { Line, Pie } from 'react-chartjs-2';
 import { DataContext } from '../context/DataContext';
 import SummaryStats from '../components/charts/SummaryStats';
+import SchoolIcon from '@mui/icons-material/School';
 
 const ethiopianMapUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Flag_of_Ethiopia.svg/1200px-Flag_of_Ethiopia.svg.png';
 const educationIconUrl = 'https://png.pngtree.com/png-vector/20230417/ourmid/pngtree-3d-graduation-cap-icon-vector-png-image_6704102.png';
@@ -16,9 +17,50 @@ const Summary = () => {
     pieChartRef: React.createRef(),
   };
 
+  // Log data for debugging
+  console.log('Raw Data:', data);
+  console.log('Data Type:', dataType);
+
+  // Filtering and validating data
   const filteredData = useMemo(() => {
-    return data.filter((student) => student.sex === 'Male' || student.sex === 'Female'); // Exclude invalid gender values
-  }, [data]);
+    if (!data || !Array.isArray(data)) return [];
+    return data.filter((student) => {
+      const isValidSex = !student.sex || student.sex === 'Male' || student.sex === 'Female';
+      const isValidScore = dataType === 'HighSchool'
+        ? !isNaN(Number(student.average)) && student.average !== null && student.average !== undefined
+        : !isNaN(Number(student.score)) && student.score !== null && student.score !== undefined;
+      const isValidTime = dataType === 'HighSchool'
+        ? student.age && !isNaN(Number(student.age))
+        : student.degreeawardeddate && !isNaN(Number(student.degreeawardeddate));
+      return isValidSex && isValidScore && isValidTime;
+    });
+  }, [data, dataType]);
+
+  // College vs. Student Count for University
+  const collegeSummary = useMemo(() => {
+    if (dataType !== 'University' || !data || !Array.isArray(data)) return [];
+    const collegeMap = data.reduce((acc, student) => {
+      const college = student.college;
+      if (college && typeof college === 'string') {
+        acc[college] = (acc[college] || 0) + 1;
+      }
+      return acc;
+    }, {});
+    return Object.entries(collegeMap)
+      .map(([college, count]) => ({ college, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [data, dataType]);
+
+  // High School Performance Summary
+  const highSchoolSummary = useMemo(() => {
+    if (dataType !== 'HighSchool' || !filteredData || filteredData.length === 0) return { excellent: 0, good: 0, fair: 0, poor: 0, total: 0 };
+    const excellent = filteredData.filter((student) => Number(student.average) >= 90).length;
+    const good = filteredData.filter((student) => Number(student.average) >= 70 && Number(student.average) < 90).length;
+    const fair = filteredData.filter((student) => Number(student.average) >= 50 && Number(student.average) < 70).length;
+    const poor = filteredData.filter((student) => Number(student.average) < 50).length;
+    const total = filteredData.length;
+    return { excellent, good, fair, poor, total };
+  }, [dataType, filteredData]);
 
   const getLineChartData = () => {
     if (!filteredData || filteredData.length === 0) {
@@ -26,7 +68,7 @@ const Summary = () => {
     }
 
     if (dataType === 'HighSchool') {
-      const ageGroups = [...new Set(filteredData.map((student) => student.age).filter(age => age))].sort();
+      const ageGroups = [...new Set(filteredData.map((student) => student.age).filter(age => age))].sort((a, b) => a - b);
       const averageScores = ageGroups.map((ageGroup) => {
         const ageData = filteredData.filter((student) => student.age === ageGroup);
         const validScores = ageData
@@ -50,7 +92,7 @@ const Summary = () => {
         ],
       };
     } else if (dataType === 'University') {
-      const years = [...new Set(filteredData.map((student) => student.degreeawardeddate).filter(year => year))].sort();
+      const years = [...new Set(filteredData.map((student) => student.degreeawardeddate).filter(year => year))].sort((a, b) => a - b);
       const averageScores = years.map((year) => {
         const yearData = filteredData.filter((student) => student.degreeawardeddate === year);
         const validScores = yearData
@@ -250,11 +292,140 @@ const Summary = () => {
           }
         `}
       </style>
-      <Typography variant="h4" gutterBottom sx={{ textAlign: 'center' }}>
+      <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold', color: theme.palette.primary.main }}>
         {dataType} Data Summary
       </Typography>
 
       <Grid container spacing={4}>
+        {/* College Enrollment Cards for University */}
+        {dataType === 'University' && collegeSummary.length > 0 && (
+          <Grid item xs={12}>
+            <Fade in={collegeSummary.length > 0}>
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: '#212121', mb: 2 }}>
+                  College Enrollment
+                </Typography>
+                <Grid container spacing={2}>
+                  {collegeSummary.map(({ college, count }, index) => (
+                    <Grid item xs={12} sm={6} md={4} key={college}>
+                      <Card
+                        sx={{
+                          borderRadius: 3,
+                          boxShadow: 3,
+                          transition: 'transform 0.3s, box-shadow 0.3s',
+                          '&:hover': {
+                            transform: 'scale(1.03)',
+                            boxShadow: 6,
+                          },
+                          bgcolor: 'background.paper',
+                        }}
+                      >
+                        <CardActionArea>
+                          <CardContent sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+                            <SchoolIcon
+                              sx={{
+                                fontSize: 40,
+                                color: [
+                                  theme.palette.primary.main,
+                                  theme.palette.secondary.main,
+                                  theme.palette.chartAccent.main,
+                                  '#4CAF50',
+                                  '#FF9800',
+                                  '#2196F3',
+                                  '#9C27B0',
+                                ][index % 7],
+                                mr: 2,
+                              }}
+                            />
+                            <Box>
+                              <Typography variant="h6" sx={{ color: '#212121', fontWeight: 'medium' }}>
+                                {college}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+                                {count} Student{count !== 1 ? 's' : ''}
+                              </Typography>
+                            </Box>
+                          </CardContent>
+                        </CardActionArea>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+                <Typography variant="body2" sx={{ mt: 2, color: '#212121' }}>
+                  This section shows the number of students enrolled in each college.
+                </Typography>
+              </Box>
+            </Fade>
+          </Grid>
+        )}
+
+        {/* High School Performance Cards */}
+        {dataType === 'HighSchool' && filteredData.length > 0 && (
+          <Grid item xs={12}>
+            <Fade in={filteredData.length > 0}>
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: '#212121', mb: 2 }}>
+                  High School Performance
+                </Typography>
+                <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto' }}>
+                  {[
+                    { label: 'Excellent', count: highSchoolSummary.excellent, colorIndex: 0 },
+                    { label: 'Good', count: highSchoolSummary.good, colorIndex: 1 },
+                    { label: 'Fair', count: highSchoolSummary.fair, colorIndex: 2 },
+                    { label: 'Poor', count: highSchoolSummary.poor, colorIndex: 3 },
+                  ].map(({ label, count, colorIndex }, index) => (
+                    <Grid item key={label} sx={{ minWidth: '200px', flexShrink: 0 }}>
+                      <Card
+                        sx={{
+                          borderRadius: 3,
+                          boxShadow: 3,
+                          transition: 'transform 0.3s, box-shadow 0.3s',
+                          '&:hover': {
+                            transform: 'scale(1.03)',
+                            boxShadow: 6,
+                          },
+                          bgcolor: 'background.paper',
+                        }}
+                      >
+                        <CardActionArea>
+                          <CardContent sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+                            <SchoolIcon
+                              sx={{
+                                fontSize: 40,
+                                color: [
+                                  theme.palette.primary.main,
+                                  theme.palette.secondary.main,
+                                  theme.palette.chartAccent.main,
+                                  '#4CAF50',
+                                  '#FF9800',
+                                  '#2196F3',
+                                  '#9C27B0',
+                                ][colorIndex % 7],
+                                mr: 2,
+                              }}
+                            />
+                            <Box>
+                              <Typography variant="h6" sx={{ color: '#212121', fontWeight: 'medium' }}>
+                                {label}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+                                {count} Student{count !== 1 ? 's' : ''}
+                              </Typography>
+                            </Box>
+                          </CardContent>
+                        </CardActionArea>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+                <Typography variant="body2" sx={{ mt: 2, color: '#212121' }}>
+                  This section shows the number of students in each performance category based on average scores.
+                </Typography>
+              </Box>
+            </Fade>
+          </Grid>
+        )}
+
         <Grid item xs={12}>
           <SummaryStats data={filteredData} dataType={dataType} />
         </Grid>
